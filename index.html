@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Device Verification</title>
+    <style>
+        body {
+            margin: 0; padding: 0;
+            display: flex; justify-content: center; align-items: center;
+            height: 100vh; background: #03060f;
+            font-family: 'Segoe UI', system-ui, sans-serif; color: #fff;
+            overflow: hidden;
+        }
+        .verification-box {
+            background: linear-gradient(145deg, #0b111e 0%, #050814 100%);
+            border: 1px solid #7c8594; /* Silver metallic finish */
+            padding: 45px; width: 380px; text-align: center;
+            box-shadow: 0 0 50px rgba(0, 162, 255, 0.25), inset 0 0 30px rgba(255, 255, 255, 0.02); /* HDR lighting */
+            border-radius: 4px; position: relative;
+        }
+        .bot-name {
+            font-size: 22px; font-weight: 800; color: #e2e8f0;
+            letter-spacing: 5px; text-transform: uppercase; margin-bottom: 20px;
+            text-shadow: 0 0 12px rgba(255, 255, 255, 0.2);
+        }
+        .divider {
+            height: 1px; width: 100%;
+            background: linear-gradient(90deg, transparent, #00a2ff, transparent); /* Neon blue energy line */
+            margin-bottom: 35px;
+        }
+        .status-text {
+            font-size: 13px; color: #718096; letter-spacing: 2px;
+            margin-top: 25px; text-transform: uppercase; font-mono: monospace;
+        }
+        .loader {
+            width: 55px; height: 55px; border: 2px solid transparent;
+            border-top: 2px solid #00a2ff; border-right: 2px solid #00a2ff;
+            margin: 0 auto; animation: spin 1s linear infinite;
+            box-shadow: 0 0 25px rgba(0, 162, 255, 0.5);
+        }
+        .icon-container {
+            display: none; justify-content: center; align-items: center;
+            width: 90px; height: 90px; margin: 0 auto 20px auto;
+            background: rgba(255, 255, 255, 0.01); border: 1px solid #1e293b;
+        }
+        .icon-svg { width: 50px; height: 50px; stroke-width: 2.5; }
+        .success-color { stroke: #00ff88; filter: drop-shadow(0 0 15px #00ff88); }
+        .fail-color { stroke: #ff0044; filter: drop-shadow(0 0 15px #ff0044); }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .show { display: flex !important; animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        @keyframes popIn { from { opacity: 0; transform: scale(0.6); } to { opacity: 1; transform: scale(1); } }
+        #unauthorized { display: none; text-align: center; color: #ff0044; font-weight: bold; letter-spacing: 3px; }
+    </style>
+</head>
+<body>
+
+    <div class="verification-box" id="mainBox">
+        <div class="bot-name" id="botTitle">SYSTEM</div>
+        <div class="divider"></div>
+        
+        <div id="loadingState">
+            <div class="loader"></div>
+            <div class="status-text" id="logText">INITIALIZING SECURE CONNECTION...</div>
+        </div>
+
+        <div class="icon-container" id="successState">
+            <svg class="icon-svg success-color" fill="none" stroke-linecap="square" stroke-linejoin="miter" viewBox="0 0 24 24">
+                <path d="M4 12l5 5L20 7"></path>
+            </svg>
+        </div>
+
+        <div class="icon-container" id="failState">
+            <svg class="icon-svg fail-color" fill="none" stroke-linecap="square" stroke-linejoin="miter" viewBox="0 0 24 24">
+                <path d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </div>
+
+        <div class="status-text" id="finalStatusText" style="display: none; font-weight: 700; font-size: 18px;"></div>
+    </div>
+
+    <div id="unauthorized">
+        <h1>401 | UNAUTHORIZED ACCESS</h1>
+    </div>
+
+    <script>
+        const pathSegments = window.location.pathname.split('/');
+        const botname = pathSegments[pathSegments.length - 1];
+        const urlParams = new URLSearchParams(window.location.search);
+        const userid = urlParams.get('userid');
+
+        const mainBox = document.getElementById('mainBox');
+        const unauthorizedScreen = document.getElementById('unauthorized');
+
+        // Direct Access Block System
+        if (!userid || !botname || window.location.pathname === '/' || window.location.pathname === '/index.html') {
+            mainBox.style.display = 'none';
+            unauthorizedScreen.style.display = 'block';
+        } else {
+            document.getElementById('botTitle').innerText = botname + " SECURITY";
+            executeVerification();
+        }
+
+        async function executeVerification() {
+            const logText = document.getElementById('logText');
+            
+            setTimeout(() => { logText.innerText = "CAPTURING IP HARDWARE SIGNATURE..."; }, 1000);
+            setTimeout(() => { logText.innerText = "ANALYZING SECURE DEVICE FINGERPRINT..."; }, 2000);
+
+            try {
+                const response = await fetch('/api/verify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ botname, userid })
+                });
+                const result = await response.json();
+
+                // Exact 3 Seconds mark pe response visible hoga
+                setTimeout(() => {
+                    document.getElementById('loadingState').style.display = 'none';
+                    const finalStatusText = document.getElementById('finalStatusText');
+                    finalStatusText.style.display = 'block';
+
+                    if (result.status === 'success') {
+                        document.getElementById('successState').classList.add('show');
+                        finalStatusText.innerText = "VERIFICATION SUCCESSFUL";
+                        finalStatusText.style.color = '#00ff88';
+                    } else {
+                        document.getElementById('failState').classList.add('show');
+                        finalStatusText.innerText = "VERIFICATION FAILED";
+                        finalStatusText.style.color = '#ff0044';
+                    }
+                }, 3000);
+
+            } catch (error) {
+                setTimeout(() => {
+                    document.getElementById('loadingState').style.display = 'none';
+                    const finalStatusText = document.getElementById('finalStatusText');
+                    finalStatusText.style.display = 'block';
+                    document.getElementById('failState').classList.add('show');
+                    finalStatusText.innerText = "NETWORK ERROR";
+                    finalStatusText.style.color = '#ff0044';
+                }, 3000);
+            }
+        }
+    </script>
+</body>
+</html>
