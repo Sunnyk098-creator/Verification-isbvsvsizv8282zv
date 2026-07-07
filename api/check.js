@@ -15,10 +15,18 @@ const firebaseApp = getApps().length === 0 ? initializeApp(firebaseConfig) : get
 const db = getDatabase(firebaseApp);
 
 module.exports = async (req, res) => {
+  // CORS Headers for API to be accessible from anywhere
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Content-Type', 'application/json');
+
   const { botname, userid } = req.query;
 
   if (!botname || !userid) {
-    return res.status(200).send("fail");
+    return res.status(400).json({
+      ok: false,
+      status: "error",
+      message: "botname or userid is missing in the URL parameters"
+    });
   }
 
   try {
@@ -27,11 +35,28 @@ module.exports = async (req, res) => {
 
     if (snapshot.exists()) {
       const data = snapshot.val();
-      return res.status(200).send(data.status); // Output: success / fail
+      // Proper JSON Response for Bots
+      return res.status(200).json({
+        ok: true,
+        status: data.status, // will be "success" or "fail"
+        userid: userid,
+        botname: botname,
+        timestamp: data.timestamp
+      });
     } else {
-      return res.status(200).send("pending");   // Output: pending
+      // If user hasn't verified yet
+      return res.status(200).json({
+        ok: true,
+        status: "pending",
+        userid: userid,
+        botname: botname
+      });
     }
   } catch (error) {
-    return res.status(200).send("fail");
+    return res.status(500).json({
+      ok: false,
+      status: "error",
+      message: "Database connection failed"
+    });
   }
 };
