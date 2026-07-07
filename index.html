@@ -25,7 +25,6 @@
             position: relative;
         }
 
-        /* Status Badge */
         .status-badge {
             background: #1a223a;
             color: #7b8fed;
@@ -44,7 +43,6 @@
             animation: pulse 1.5s infinite;
         }
 
-        /* Center Icon Area */
         .icon-circle {
             width: 100px; height: 100px;
             background: linear-gradient(180deg, rgba(41,53,86,0.3) 0%, rgba(20,27,46,0) 100%);
@@ -58,7 +56,6 @@
         
         .icon-svg { width: 40px; height: 40px; color: #8ba4f9; transition: all 0.3s ease; }
         
-        /* Scan Line Animation */
         .scan-line {
             position: absolute; top: 0; left: 0; right: 0; height: 2px;
             background: #4ef;
@@ -66,11 +63,9 @@
             animation: scanMove 2s linear infinite;
         }
 
-        /* Text Area */
         .title { font-size: 22px; font-weight: 700; margin-bottom: 8px; color: #f8f9fa; transition: all 0.3s; }
         .subtitle { font-size: 13px; color: #8c9bba; margin-bottom: 40px; transition: all 0.3s; }
 
-        /* Footer Button */
         .action-btn {
             background: #1e263d;
             color: #5d6b8e;
@@ -90,11 +85,9 @@
             box-shadow: 0 5px 20px rgba(43, 108, 241, 0.4);
         }
 
-        /* Animations */
         @keyframes pulse { 0% { opacity: 0.4; } 50% { opacity: 1; } 100% { opacity: 0.4; } }
         @keyframes scanMove { 0% { top: -10%; } 100% { top: 110%; } }
         
-        /* States (Success/Fail) */
         .success-mode .icon-svg { color: #22c55e; }
         .success-mode .status-badge { background: #062b1a; color: #22c55e; }
         .success-mode .status-badge .dot { background: #22c55e; animation: none; }
@@ -142,20 +135,17 @@
         }
 
         async function startVerification() {
-            // STEP 1: Scanning (0s - 1.5s)
-            // (Default state in HTML)
+            // Step 1: Scanning (0s - 1.5s)
 
-            // STEP 2: Processing (1.5s - 3s)
+            // Step 2: Processing (1.5s - 3s)
             setTimeout(() => {
                 document.getElementById('badgeText').innerText = 'PROCESSING';
                 document.getElementById('mainTitle').innerText = 'Analyzing Device';
                 document.getElementById('subTitle').innerText = 'Verifying hardware signature...';
-                // CPU/Chip Icon
                 document.getElementById('mainIcon').innerHTML = '<rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><rect x="9" y="9" width="6" height="6"></rect><line x1="9" y1="1" x2="9" y2="4"></line><line x1="15" y1="1" x2="15" y2="4"></line><line x1="9" y1="20" x2="9" y2="23"></line><line x1="15" y1="20" x2="15" y2="23"></line><line x1="20" y1="9" x2="23" y2="9"></line><line x1="20" y1="14" x2="23" y2="14"></line><line x1="1" y1="9" x2="4" y2="9"></line><line x1="1" y1="14" x2="4" y2="14"></line>';
             }, 1500);
 
             try {
-                // Background API Call
                 const response = await fetch('/api/verify', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -163,7 +153,7 @@
                 });
                 const result = await response.json();
 
-                // STEP 3: Result (After 3s)
+                // Step 3: Result Rendering (Exact 3s mark)
                 setTimeout(() => {
                     document.getElementById('scanLine').style.display = 'none';
                     const mainBox = document.getElementById('mainBox');
@@ -173,20 +163,30 @@
                         mainBox.classList.add('success-mode');
                         document.getElementById('badgeText').innerText = 'VERIFIED';
                         document.getElementById('mainTitle').innerText = 'Access Granted';
-                        document.getElementById('subTitle').innerText = 'Your device is securely verified.';
-                        // Check Icon
-                        document.getElementById('mainIcon').innerHTML = '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline>';
                         
+                        // Condition check if already verified or freshly verified
+                        if (result.mode === 'already') {
+                            document.getElementById('subTitle').innerText = 'Your device is already verified.';
+                        } else {
+                            document.getElementById('subTitle').innerText = 'Your device is securely verified.';
+                        }
+                        
+                        document.getElementById('mainIcon').innerHTML = '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline>';
                         btn.innerText = 'Return To Bot';
                         btn.classList.add('active');
                         btn.disabled = false;
-                        btn.onclick = () => window.close(); // Closes window if possible
+                        btn.onclick = () => window.close();
                     } else {
                         mainBox.classList.add('fail-mode');
                         document.getElementById('badgeText').innerText = 'BLOCKED';
-                        document.getElementById('mainTitle').innerText = 'Access Denied';
-                        document.getElementById('subTitle').innerText = 'Device already used or invalid.';
-                        // Cross Icon
+                        
+                        if (result.mode === 'already') {
+                            document.getElementById('mainTitle').innerText = 'Already Failed';
+                            document.getElementById('subTitle').innerText = 'This verification link was previously failed.';
+                        } else {
+                            document.getElementById('mainTitle').innerText = 'Access Denied';
+                            document.getElementById('subTitle').innerText = 'Device already used or invalid.';
+                        }
                         document.getElementById('mainIcon').innerHTML = '<circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>';
                     }
                 }, 3000);
@@ -197,7 +197,7 @@
                     document.getElementById('mainBox').classList.add('fail-mode');
                     document.getElementById('badgeText').innerText = 'ERROR';
                     document.getElementById('mainTitle').innerText = 'Network Error';
-                    document.getElementById('subTitle').innerText = 'Could not reach servers.';
+                    document.getElementById('subTitle').innerText = 'Could not reach verification servers.';
                 }, 3000);
             }
         }
