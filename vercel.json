@@ -1,0 +1,7 @@
+{
+  "version": 2,
+  "rewrites": [
+    { "source": "/verification/:botname", "destination": "/index.html" },
+    { "source": "/check/:botname", "destination": "/api/check?botname=:botname" }
+  ]
+}
