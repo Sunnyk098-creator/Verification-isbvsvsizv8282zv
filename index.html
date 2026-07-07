@@ -3,111 +3,159 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Secure Device Verification</title>
+    <title>Security Verification</title>
     <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            margin: 0; padding: 0;
-            display: flex; justify-content: center; align-items: center;
-            height: 100vh; background: #03060f;
-            font-family: 'Segoe UI', system-ui, sans-serif; color: #fff;
-            overflow: hidden;
+            background-color: #0b1021;
+            background-image: radial-gradient(circle at 50% -20%, #1a2342 0%, #0b1021 70%);
+            color: #ffffff;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            display: flex; align-items: center; justify-content: center;
+            height: 100vh; overflow: hidden;
         }
-        .verification-box {
-            background: linear-gradient(145deg, #0b111e 0%, #050814 100%);
-            border: 1px solid #7c8594; /* Silver metallic finish */
-            padding: 45px; width: 380px; text-align: center;
-            box-shadow: 0 0 50px rgba(0, 162, 255, 0.25), inset 0 0 30px rgba(255, 255, 255, 0.02); /* HDR lighting */
-            border-radius: 4px; position: relative;
+
+        .card {
+            background: #141b2e;
+            border-radius: 24px;
+            width: 360px;
+            padding: 40px 20px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5), inset 0 1px 2px rgba(255,255,255,0.05);
+            position: relative;
         }
-        .bot-name {
-            font-size: 22px; font-weight: 800; color: #e2e8f0;
-            letter-spacing: 5px; text-transform: uppercase; margin-bottom: 20px;
-            text-shadow: 0 0 12px rgba(255, 255, 255, 0.2);
+
+        /* Status Badge */
+        .status-badge {
+            background: #1a223a;
+            color: #7b8fed;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            padding: 6px 16px;
+            border-radius: 20px;
+            display: inline-flex; align-items: center; gap: 8px;
+            margin-bottom: 40px;
+            transition: all 0.3s ease;
         }
-        .divider {
-            height: 1px; width: 100%;
-            background: linear-gradient(90deg, transparent, #00a2ff, transparent); /* Neon blue energy line */
-            margin-bottom: 35px;
+        .status-badge .dot {
+            width: 6px; height: 6px; border-radius: 50%;
+            background: #7b8fed;
+            animation: pulse 1.5s infinite;
         }
-        .status-text {
-            font-size: 13px; color: #718096; letter-spacing: 2px;
-            margin-top: 25px; text-transform: uppercase; font-mono: monospace;
+
+        /* Center Icon Area */
+        .icon-circle {
+            width: 100px; height: 100px;
+            background: linear-gradient(180deg, rgba(41,53,86,0.3) 0%, rgba(20,27,46,0) 100%);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 50%;
+            margin: 0 auto 30px auto;
+            display: flex; align-items: center; justify-content: center;
+            position: relative; overflow: hidden;
+            box-shadow: 0 0 30px rgba(66, 133, 244, 0.1);
         }
-        .loader {
-            width: 55px; height: 55px; border: 2px solid transparent;
-            border-top: 2px solid #00a2ff; border-right: 2px solid #00a2ff;
-            margin: 0 auto; animation: spin 1s linear infinite;
-            box-shadow: 0 0 25px rgba(0, 162, 255, 0.5);
+        
+        .icon-svg { width: 40px; height: 40px; color: #8ba4f9; transition: all 0.3s ease; }
+        
+        /* Scan Line Animation */
+        .scan-line {
+            position: absolute; top: 0; left: 0; right: 0; height: 2px;
+            background: #4ef;
+            box-shadow: 0 0 15px 2px #4ef;
+            animation: scanMove 2s linear infinite;
         }
-        .icon-container {
-            display: none; justify-content: center; align-items: center;
-            width: 90px; height: 90px; margin: 0 auto 20px auto;
-            background: rgba(255, 255, 255, 0.01); border: 1px solid #1e293b;
+
+        /* Text Area */
+        .title { font-size: 22px; font-weight: 700; margin-bottom: 8px; color: #f8f9fa; transition: all 0.3s; }
+        .subtitle { font-size: 13px; color: #8c9bba; margin-bottom: 40px; transition: all 0.3s; }
+
+        /* Footer Button */
+        .action-btn {
+            background: #1e263d;
+            color: #5d6b8e;
+            border: none;
+            width: 100%;
+            padding: 16px;
+            border-radius: 14px;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.4s ease;
+            cursor: not-allowed;
         }
-        .icon-svg { width: 50px; height: 50px; stroke-width: 2.5; }
-        .success-color { stroke: #00ff88; filter: drop-shadow(0 0 15px #00ff88); }
-        .fail-color { stroke: #ff0044; filter: drop-shadow(0 0 15px #ff0044); }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .show { display: flex !important; animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-        @keyframes popIn { from { opacity: 0; transform: scale(0.6); } to { opacity: 1; transform: scale(1); } }
-        #unauthorized { display: none; text-align: center; color: #ff0044; font-weight: bold; letter-spacing: 3px; }
+        .action-btn.active {
+            background: linear-gradient(90deg, #2b6cf1 0%, #683bf5 100%);
+            color: #fff;
+            cursor: pointer;
+            box-shadow: 0 5px 20px rgba(43, 108, 241, 0.4);
+        }
+
+        /* Animations */
+        @keyframes pulse { 0% { opacity: 0.4; } 50% { opacity: 1; } 100% { opacity: 0.4; } }
+        @keyframes scanMove { 0% { top: -10%; } 100% { top: 110%; } }
+        
+        /* States (Success/Fail) */
+        .success-mode .icon-svg { color: #22c55e; }
+        .success-mode .status-badge { background: #062b1a; color: #22c55e; }
+        .success-mode .status-badge .dot { background: #22c55e; animation: none; }
+        
+        .fail-mode .icon-svg { color: #ef4444; }
+        .fail-mode .status-badge { background: #3f1010; color: #ef4444; }
+        .fail-mode .status-badge .dot { background: #ef4444; animation: none; }
+
+        #unauthorized { display: none; text-align: center; color: #ef4444; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <div class="verification-box" id="mainBox">
-        <div class="bot-name" id="botTitle">SYSTEM</div>
-        <div class="divider"></div>
-        
-        <div id="loadingState">
-            <div class="loader"></div>
-            <div class="status-text" id="logText">INITIALIZING SECURE CONNECTION...</div>
+    <div class="card" id="mainBox">
+        <div class="status-badge" id="badge">
+            <span class="dot" id="badgeDot"></span> <span id="badgeText">SCANNING</span>
         </div>
 
-        <div class="icon-container" id="successState">
-            <svg class="icon-svg success-color" fill="none" stroke-linecap="square" stroke-linejoin="miter" viewBox="0 0 24 24">
-                <path d="M4 12l5 5L20 7"></path>
+        <div class="icon-circle" id="iconBox">
+            <svg id="mainIcon" class="icon-svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                <path d="M12 8v4"></path><path d="M12 16h.01"></path>
             </svg>
+            <div class="scan-line" id="scanLine"></div>
         </div>
 
-        <div class="icon-container" id="failState">
-            <svg class="icon-svg fail-color" fill="none" stroke-linecap="square" stroke-linejoin="miter" viewBox="0 0 24 24">
-                <path d="M6 18L18 6M6 6l12 12"></path>
-            </svg>
-        </div>
+        <h2 class="title" id="mainTitle">Security Scan</h2>
+        <p class="subtitle" id="subTitle">Analyzing network packets...</p>
 
-        <div class="status-text" id="finalStatusText" style="display: none; font-weight: 700; font-size: 18px;"></div>
+        <button class="action-btn" id="actionBtn" disabled>Awaiting Verification</button>
     </div>
 
-    <div id="unauthorized">
-        <h1>401 | UNAUTHORIZED ACCESS</h1>
-    </div>
+    <div id="unauthorized"><h2>401 | UNAUTHORIZED</h2></div>
 
     <script>
-        const pathSegments = window.location.pathname.split('/');
-        const botname = pathSegments[pathSegments.length - 1];
         const urlParams = new URLSearchParams(window.location.search);
         const userid = urlParams.get('userid');
+        const botname = window.location.pathname.split('/').pop();
 
-        const mainBox = document.getElementById('mainBox');
-        const unauthorizedScreen = document.getElementById('unauthorized');
-
-        // Direct Access Block System
         if (!userid || !botname || window.location.pathname === '/' || window.location.pathname === '/index.html') {
-            mainBox.style.display = 'none';
-            unauthorizedScreen.style.display = 'block';
+            document.getElementById('mainBox').style.display = 'none';
+            document.getElementById('unauthorized').style.display = 'block';
         } else {
-            document.getElementById('botTitle').innerText = botname + " SECURITY";
-            executeVerification();
+            startVerification();
         }
 
-        async function executeVerification() {
-            const logText = document.getElementById('logText');
-            
-            setTimeout(() => { logText.innerText = "CAPTURING IP HARDWARE SIGNATURE..."; }, 1000);
-            setTimeout(() => { logText.innerText = "ANALYZING SECURE DEVICE FINGERPRINT..."; }, 2000);
+        async function startVerification() {
+            // STEP 1: Scanning (0s - 1.5s)
+            // (Default state in HTML)
+
+            // STEP 2: Processing (1.5s - 3s)
+            setTimeout(() => {
+                document.getElementById('badgeText').innerText = 'PROCESSING';
+                document.getElementById('mainTitle').innerText = 'Analyzing Device';
+                document.getElementById('subTitle').innerText = 'Verifying hardware signature...';
+                // CPU/Chip Icon
+                document.getElementById('mainIcon').innerHTML = '<rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><rect x="9" y="9" width="6" height="6"></rect><line x1="9" y1="1" x2="9" y2="4"></line><line x1="15" y1="1" x2="15" y2="4"></line><line x1="9" y1="20" x2="9" y2="23"></line><line x1="15" y1="20" x2="15" y2="23"></line><line x1="20" y1="9" x2="23" y2="9"></line><line x1="20" y1="14" x2="23" y2="14"></line><line x1="1" y1="9" x2="4" y2="9"></line><line x1="1" y1="14" x2="4" y2="14"></line>';
+            }, 1500);
 
             try {
+                // Background API Call
                 const response = await fetch('/api/verify', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -115,31 +163,41 @@
                 });
                 const result = await response.json();
 
-                // Exact 3 Seconds mark pe response visible hoga
+                // STEP 3: Result (After 3s)
                 setTimeout(() => {
-                    document.getElementById('loadingState').style.display = 'none';
-                    const finalStatusText = document.getElementById('finalStatusText');
-                    finalStatusText.style.display = 'block';
+                    document.getElementById('scanLine').style.display = 'none';
+                    const mainBox = document.getElementById('mainBox');
+                    const btn = document.getElementById('actionBtn');
 
                     if (result.status === 'success') {
-                        document.getElementById('successState').classList.add('show');
-                        finalStatusText.innerText = "VERIFICATION SUCCESSFUL";
-                        finalStatusText.style.color = '#00ff88';
+                        mainBox.classList.add('success-mode');
+                        document.getElementById('badgeText').innerText = 'VERIFIED';
+                        document.getElementById('mainTitle').innerText = 'Access Granted';
+                        document.getElementById('subTitle').innerText = 'Your device is securely verified.';
+                        // Check Icon
+                        document.getElementById('mainIcon').innerHTML = '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline>';
+                        
+                        btn.innerText = 'Return To Bot';
+                        btn.classList.add('active');
+                        btn.disabled = false;
+                        btn.onclick = () => window.close(); // Closes window if possible
                     } else {
-                        document.getElementById('failState').classList.add('show');
-                        finalStatusText.innerText = "VERIFICATION FAILED";
-                        finalStatusText.style.color = '#ff0044';
+                        mainBox.classList.add('fail-mode');
+                        document.getElementById('badgeText').innerText = 'BLOCKED';
+                        document.getElementById('mainTitle').innerText = 'Access Denied';
+                        document.getElementById('subTitle').innerText = 'Device already used or invalid.';
+                        // Cross Icon
+                        document.getElementById('mainIcon').innerHTML = '<circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>';
                     }
                 }, 3000);
 
-            } catch (error) {
+            } catch (err) {
                 setTimeout(() => {
-                    document.getElementById('loadingState').style.display = 'none';
-                    const finalStatusText = document.getElementById('finalStatusText');
-                    finalStatusText.style.display = 'block';
-                    document.getElementById('failState').classList.add('show');
-                    finalStatusText.innerText = "NETWORK ERROR";
-                    finalStatusText.style.color = '#ff0044';
+                    document.getElementById('scanLine').style.display = 'none';
+                    document.getElementById('mainBox').classList.add('fail-mode');
+                    document.getElementById('badgeText').innerText = 'ERROR';
+                    document.getElementById('mainTitle').innerText = 'Network Error';
+                    document.getElementById('subTitle').innerText = 'Could not reach servers.';
                 }, 3000);
             }
         }
