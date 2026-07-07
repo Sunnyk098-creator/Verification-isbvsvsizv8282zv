@@ -11,7 +11,6 @@ const firebaseConfig = {
   appId: process.env.FIREBASE_APP_ID
 };
 
-// Prevent duplicate initialization in serverless environments
 const firebaseApp = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 const db = getDatabase(firebaseApp);
 
@@ -25,7 +24,7 @@ module.exports = async (req, res) => {
     return res.status(400).json({ status: 'fail', message: 'Missing parameters' });
   }
 
-  // Pure Server-Side Secure IP Collection (Client isse spoof nahi kar sakta)
+  // Get real IP from Vercel headers
   const userIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || "0.0.0.0";
 
   try {
@@ -44,20 +43,10 @@ module.exports = async (req, res) => {
     }
 
     if (ipExists) {
-      // 3 clean items updated in database
-      await set(ref(db, `${botname}/${userid}`), {
-        status: "fail",
-        ip: userIp,
-        timestamp: Date.now()
-      });
+      await set(ref(db, `${botname}/${userid}`), { status: "fail", ip: userIp, timestamp: Date.now() });
       return res.status(200).json({ status: 'fail' });
     } else {
-      // 3 clean items saved in database
-      await set(ref(db, `${botname}/${userid}`), {
-        status: "success",
-        ip: userIp,
-        timestamp: Date.now()
-      });
+      await set(ref(db, `${botname}/${userid}`), { status: "success", ip: userIp, timestamp: Date.now() });
       return res.status(200).json({ status: 'success' });
     }
   } catch (error) {
