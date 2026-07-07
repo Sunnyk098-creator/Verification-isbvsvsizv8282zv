@@ -15,9 +15,9 @@ const firebaseApp = getApps().length === 0 ? initializeApp(firebaseConfig) : get
 const db = getDatabase(firebaseApp);
 
 module.exports = async (req, res) => {
-  // CORS configuration taaki bot bina block huye read kare
+  // CORS Configuration
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Content-Type', 'application/json'); // Clean JSON format
+  res.setHeader('Content-Type', 'application/json');
 
   const { botname, userid } = req.query;
 
@@ -27,16 +27,19 @@ module.exports = async (req, res) => {
 
   try {
     const dbRef = ref(db);
-    const snapshot = await get(child(dbRef, `${dbname || botname}/${userid}`));
+    
+    // FIX: Yahan se 'dbname' hata kar sirf 'botname' kar diya hai
+    const snapshot = await get(child(dbRef, `${botname}/${userid}`));
 
     if (snapshot.exists()) {
       const data = snapshot.val();
-      // Returns clean JSON with 1-word status value
+      // Yeh exact aapka saved status (success/fail) return karega ka bina crash huye
       return res.status(200).json({ status: data.status }); 
     } else {
       return res.status(200).json({ status: "pending" });
     }
   } catch (error) {
+    // Agar koi real internal database error aaye tabhi yeh fail dega
     return res.status(200).json({ status: "fail" });
   }
 };
