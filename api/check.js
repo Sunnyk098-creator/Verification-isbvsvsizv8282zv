@@ -15,18 +15,14 @@ const firebaseApp = getApps().length === 0 ? initializeApp(firebaseConfig) : get
 const db = getDatabase(firebaseApp);
 
 module.exports = async (req, res) => {
-  // CORS Headers for API to be accessible from anywhere
+  // CORS taaki aapka bot ise kahin se bhi hit kar sake
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Content-Type', 'application/json');
+  res.setHeader('Content-Type', 'text/plain'); // Plain text response
 
   const { botname, userid } = req.query;
 
   if (!botname || !userid) {
-    return res.status(400).json({
-      ok: false,
-      status: "error",
-      message: "botname or userid is missing in the URL parameters"
-    });
+    return res.status(200).send("fail");
   }
 
   try {
@@ -35,28 +31,11 @@ module.exports = async (req, res) => {
 
     if (snapshot.exists()) {
       const data = snapshot.val();
-      // Proper JSON Response for Bots
-      return res.status(200).json({
-        ok: true,
-        status: data.status, // will be "success" or "fail"
-        userid: userid,
-        botname: botname,
-        timestamp: data.timestamp
-      });
+      return res.status(200).send(data.status); // Output: Only "success" or "fail"
     } else {
-      // If user hasn't verified yet
-      return res.status(200).json({
-        ok: true,
-        status: "pending",
-        userid: userid,
-        botname: botname
-      });
+      return res.status(200).send("pending");   // Output: Only "pending"
     }
   } catch (error) {
-    return res.status(500).json({
-      ok: false,
-      status: "error",
-      message: "Database connection failed"
-    });
+    return res.status(200).send("fail");
   }
 };
