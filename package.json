@@ -1,0 +1,9 @@
+{
+  "name": "device-verification-vercel",
+  "version": "1.0.0",
+  "description": "Secure Device Verification System on Vercel Serverless",
+  "main": "api/verify.js",
+  "dependencies": {
+    "firebase": "^10.5.0"
+  }
+}
